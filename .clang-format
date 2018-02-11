@@ -1,0 +1,11 @@
+---
+Language:        Cpp
+AlwaysBreakTemplateDeclarations: true
+BasedOnStyle:  WebKit
+BinPackParameters: false
+BreakBeforeBraces: Allman
+ColumnLimit: 120
+Cpp11BracedListStyle: true
+PointerAlignment: Middle
+SpacesInParentheses: true
+
