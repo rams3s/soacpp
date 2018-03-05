@@ -63,6 +63,10 @@ namespace soacpp
             return std::get<I>( data );
         }
 
+        bool empty() const noexcept;
+        size_type size() const noexcept;
+        size_type capacity() const noexcept;
+        void reserve( size_type count );
         void resize( size_type count );
 
     private:
@@ -82,6 +86,31 @@ namespace soacpp
     {
         return detail::index_apply<attribute_count>(
             [this, idx]( auto... Is ) -> reference { return {std::get<Is>( data )[idx]...}; } );
+    }
+
+    template <template <class...> class Container, typename... Attrs>
+    bool soa<Container, Attrs...>::empty() const noexcept
+    {
+        return std::get<0>( data ).empty();
+    }
+
+    template <template <class...> class Container, typename... Attrs>
+    typename soa<Container, Attrs...>::size_type soa<Container, Attrs...>::size() const noexcept
+    {
+        return std::get<0>( data ).size();
+    }
+
+    template <template <class...> class Container, typename... Attrs>
+    typename soa<Container, Attrs...>::size_type soa<Container, Attrs...>::capacity() const noexcept
+    {
+        return std::get<0>( data ).capacity();
+    }
+
+    template <template <class...> class Container, typename... Attrs>
+    void soa<Container, Attrs...>::reserve( size_type count )
+    {
+        detail::index_apply<attribute_count>(
+            [this, count]( auto... Is ) { detail::call( ( std::get<Is>( data ).reserve( count ), true )... ); } );
     }
 
     template <template <class...> class Container, typename... Attrs>

@@ -2,7 +2,7 @@
 
 #include "soa.h"
 
-TEST_CASE( "struct-of-arrays are properly constructed", "[soa]" )
+TEST_CASE( "constructors", "[soa]" )
 {
     soacpp::soa_vector<uint8_t, float, double, bool> soa;
     soacpp::soa_vector<uint8_t, float, double, bool> soa_with_size( 16 );
@@ -15,10 +15,10 @@ TEST_CASE( "struct-of-arrays are properly constructed", "[soa]" )
 
     SECTION( "every sub vector contains the right item count" )
     {
-        REQUIRE( soa.getContainer<0>().size() == 0 );
-        REQUIRE( soa.getContainer<1>().size() == 0 );
-        REQUIRE( soa.getContainer<2>().size() == 0 );
-        REQUIRE( soa.getContainer<3>().size() == 0 );
+        REQUIRE( soa.getContainer<0>().empty() );
+        REQUIRE( soa.getContainer<1>().empty() );
+        REQUIRE( soa.getContainer<2>().empty() );
+        REQUIRE( soa.getContainer<3>().empty() );
 
         REQUIRE( soa_with_size.getContainer<0>().size() == 16 );
         REQUIRE( soa_with_size.getContainer<1>().size() == 16 );
@@ -27,23 +27,54 @@ TEST_CASE( "struct-of-arrays are properly constructed", "[soa]" )
     }
 }
 
-TEST_CASE( "struct-of-arrays are properly resized", "[soa]" )
+TEST_CASE( "Capacity", "[soa]" )
 {
-    soacpp::soa_vector<uint8_t, float, double, bool> soa;
+    soacpp::soa_vector<uint8_t, float, bool> soa;
 
-    SECTION( "every sub vector is properly resized" )
+    SECTION( "empty" )
     {
-        REQUIRE( soa.getContainer<0>().size() == 0 );
-        REQUIRE( soa.getContainer<1>().size() == 0 );
-        REQUIRE( soa.getContainer<2>().size() == 0 );
-        REQUIRE( soa.getContainer<3>().size() == 0 );
+        soacpp::soa_vector<uint8_t, float, bool> soa_with_size( 4 );
+
+        REQUIRE( soa.empty() );
+        REQUIRE( soa.size() == 0 );
+
+        REQUIRE( !soa_with_size.empty() );
+        REQUIRE( soa_with_size.size() == 4 );
+    }
+
+    SECTION( "reserve" )
+    {
+        REQUIRE( soa.empty() );
+        REQUIRE( soa.getContainer<0>().capacity() == 0 );
+        REQUIRE( soa.getContainer<1>().capacity() == 0 );
+        REQUIRE( soa.getContainer<2>().capacity() == 0 );
+
+        soa.reserve( 32 );
+
+        REQUIRE( soa.empty() );
+        REQUIRE( soa.getContainer<0>().empty() );
+        REQUIRE( soa.getContainer<1>().empty() );
+        REQUIRE( soa.getContainer<2>().empty() );
+
+        REQUIRE( soa.capacity() >= 32 );
+        REQUIRE( soa.getContainer<0>().capacity() >= 32 );
+        REQUIRE( soa.getContainer<1>().capacity() >= 32 );
+        REQUIRE( soa.getContainer<2>().capacity() >= 32 );
+    }
+
+    SECTION( "resize" )
+    {
+        REQUIRE( soa.empty() );
+        REQUIRE( soa.getContainer<0>().empty() );
+        REQUIRE( soa.getContainer<1>().empty() );
+        REQUIRE( soa.getContainer<2>().empty() );
 
         soa.resize( 32 );
 
+        REQUIRE( soa.size() == 32 );
         REQUIRE( soa.getContainer<0>().size() == 32 );
         REQUIRE( soa.getContainer<1>().size() == 32 );
         REQUIRE( soa.getContainer<2>().size() == 32 );
-        REQUIRE( soa.getContainer<3>().size() == 32 );
     }
 }
 
