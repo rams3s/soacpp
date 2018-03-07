@@ -39,6 +39,7 @@ namespace soacpp
 
     public:
         using reference = std::tuple<typename Container<Attrs>::reference...>;
+        using const_reference = std::tuple<typename Container<Attrs>::const_reference...>;
         using arrays = std::tuple<Container<Attrs>...>;
     };
 
@@ -50,12 +51,16 @@ namespace soacpp
         using helper = soa_helper<Container, Attrs...>;
         using size_type = std::size_t;
         using reference = typename helper::reference;
+        using const_reference = typename helper::const_reference;
         using arrays = typename helper::arrays;
 
         soa() = default;
         explicit soa( size_type count );
 
-        reference operator[]( size_type /*idx*/ );
+        // element access
+
+        reference operator[]( size_type idx );
+        const_reference operator[]( size_type idx ) const;
 
         template<std::size_t I>
         typename std::tuple_element<I, arrays>::type & getContainer()
@@ -169,9 +174,11 @@ namespace soacpp
 #define GET_TUPLE_TYPE( ... )                                                                                          \
     std::tuple EVAL( MAKE_TUPLE_TYPE_LIST( TRANSFORM( GET_CONTAINER_TYPE, ( __VA_ARGS__ ) ) ) )
 
-#define DECLARE_ATTRIBUTE( ATTRIBUTE_ ) typename GET_CONTAINER_TYPE( ATTRIBUTE_ )::reference ATTRIBUTE_
+#define DECLARE_REFERENCE_ATTRIBUTE( ATTRIBUTE_ ) typename GET_CONTAINER_TYPE( ATTRIBUTE_ )::reference ATTRIBUTE_
+#define DECLARE_CONST_REFERENCE_ATTRIBUTE( ATTRIBUTE_ ) typename GET_CONTAINER_TYPE( ATTRIBUTE_ )::const_reference ATTRIBUTE_
 
-#define DECLARE_ATTRIBUTES( ... ) TRANSFORM_SEP( DECLARE_ATTRIBUTE, ;, ( __VA_ARGS__ ) )
+#define DECLARE_REFERENCE_ATTRIBUTES( ... ) TRANSFORM_SEP( DECLARE_REFERENCE_ATTRIBUTE, ;, ( __VA_ARGS__ ) )
+#define DECLARE_CONST_REFERENCE_ATTRIBUTES( ... ) TRANSFORM_SEP( DECLARE_CONST_REFERENCE_ATTRIBUTE, ;, ( __VA_ARGS__ ) )
 
 #define DECLARE_SOA_TYPE( CLASS_, ... )                                                                                \
     template <template <class...> class Container>                                                                     \
@@ -182,7 +189,12 @@ namespace soacpp
     public:                                                                                                            \
         struct reference                                                                                               \
         {                                                                                                              \
-            DECLARE_ATTRIBUTES( __VA_ARGS__ );                                                                         \
+            DECLARE_REFERENCE_ATTRIBUTES( __VA_ARGS__ );                                                                         \
+        };                                                                                                             \
+                                                                                                                       \
+        struct const_reference                                                                                               \
+        {                                                                                                              \
+            DECLARE_CONST_REFERENCE_ATTRIBUTES( __VA_ARGS__ );                                                                         \
         };                                                                                                             \
                                                                                                                        \
         using arrays = GET_TUPLE_TYPE( __VA_ARGS__ );                                                               \

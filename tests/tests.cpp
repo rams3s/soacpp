@@ -27,6 +27,38 @@ TEST_CASE( "constructors", "[soa]" )
     }
 }
 
+TEST_CASE( "element access", "[soa]" )
+{
+    soacpp::soa_vector<uint8_t, float, bool> soa(4);
+
+    for ( std::size_t i = 0; i < soa.size(); ++i )
+    {
+        std::get<0>( soa[ i ] ) = static_cast< uint8_t >( i );
+        std::get<1>( soa[ i ] ) = 2.0f * i;
+        std::get<2>( soa[i] ) = ( ( i & 1 ) != 0u );
+    }
+
+    SECTION( "operator[]" )
+    {
+        REQUIRE( std::get<0>( soa[ 0 ] ) == 0 );
+        REQUIRE( std::get<0>( soa[ 1 ] ) == 1 );
+        REQUIRE( std::get<0>( soa[ 2 ] ) == 2 );
+        REQUIRE( std::get<0>( soa[ 3 ] ) == 3 );
+
+        REQUIRE( std::get<1>( soa[ 0 ] ) == 0.0f );
+        REQUIRE( std::get<1>( soa[ 1 ] ) == 2.0f );
+        REQUIRE( std::get<1>( soa[ 2 ] ) == 4.0f );
+        REQUIRE( std::get<1>( soa[ 3 ] ) == 6.0f   );
+
+        REQUIRE( std::get<2>( soa[ 0 ] ) == false );
+        REQUIRE( std::get<2>( soa[ 1 ] ) == true );
+        REQUIRE( std::get<2>( soa[ 2 ] ) == false );
+        REQUIRE( std::get<2>( soa[ 3 ] ) == true );
+    }
+
+    // :TODO: const
+}
+
 TEST_CASE( "Capacity", "[soa]" )
 {
     soacpp::soa_vector<uint8_t, float, bool> soa;
