@@ -15,15 +15,15 @@ TEST_CASE( "constructors", "[soa]" )
 
     SECTION( "every sub vector contains the right item count" )
     {
-        REQUIRE( soa.getContainer<0>().empty() );
-        REQUIRE( soa.getContainer<1>().empty() );
-        REQUIRE( soa.getContainer<2>().empty() );
-        REQUIRE( soa.getContainer<3>().empty() );
+        REQUIRE( soa.array<0>().empty() );
+        REQUIRE( soa.array<1>().empty() );
+        REQUIRE( soa.array<2>().empty() );
+        REQUIRE( soa.array<3>().empty() );
 
-        REQUIRE( soa_with_size.getContainer<0>().size() == 16 );
-        REQUIRE( soa_with_size.getContainer<1>().size() == 16 );
-        REQUIRE( soa_with_size.getContainer<2>().size() == 16 );
-        REQUIRE( soa_with_size.getContainer<3>().size() == 16 );
+        REQUIRE( soa_with_size.array<0>().size() == 16 );
+        REQUIRE( soa_with_size.array<1>().size() == 16 );
+        REQUIRE( soa_with_size.array<2>().size() == 16 );
+        REQUIRE( soa_with_size.array<3>().size() == 16 );
     }
 }
 
@@ -77,36 +77,36 @@ TEST_CASE( "Capacity", "[soa]" )
     SECTION( "reserve" )
     {
         REQUIRE( soa.empty() );
-        REQUIRE( soa.getContainer<0>().capacity() == 0 );
-        REQUIRE( soa.getContainer<1>().capacity() == 0 );
-        REQUIRE( soa.getContainer<2>().capacity() == 0 );
+        REQUIRE( soa.array<0>().capacity() == 0 );
+        REQUIRE( soa.array<1>().capacity() == 0 );
+        REQUIRE( soa.array<2>().capacity() == 0 );
 
         soa.reserve( 32 );
 
         REQUIRE( soa.empty() );
-        REQUIRE( soa.getContainer<0>().empty() );
-        REQUIRE( soa.getContainer<1>().empty() );
-        REQUIRE( soa.getContainer<2>().empty() );
+        REQUIRE( soa.array<0>().empty() );
+        REQUIRE( soa.array<1>().empty() );
+        REQUIRE( soa.array<2>().empty() );
 
         REQUIRE( soa.capacity() >= 32 );
-        REQUIRE( soa.getContainer<0>().capacity() >= 32 );
-        REQUIRE( soa.getContainer<1>().capacity() >= 32 );
-        REQUIRE( soa.getContainer<2>().capacity() >= 32 );
+        REQUIRE( soa.array<0>().capacity() >= 32 );
+        REQUIRE( soa.array<1>().capacity() >= 32 );
+        REQUIRE( soa.array<2>().capacity() >= 32 );
     }
 
     SECTION( "resize" )
     {
         REQUIRE( soa.empty() );
-        REQUIRE( soa.getContainer<0>().empty() );
-        REQUIRE( soa.getContainer<1>().empty() );
-        REQUIRE( soa.getContainer<2>().empty() );
+        REQUIRE( soa.array<0>().empty() );
+        REQUIRE( soa.array<1>().empty() );
+        REQUIRE( soa.array<2>().empty() );
 
         soa.resize( 32 );
 
         REQUIRE( soa.size() == 32 );
-        REQUIRE( soa.getContainer<0>().size() == 32 );
-        REQUIRE( soa.getContainer<1>().size() == 32 );
-        REQUIRE( soa.getContainer<2>().size() == 32 );
+        REQUIRE( soa.array<0>().size() == 32 );
+        REQUIRE( soa.array<1>().size() == 32 );
+        REQUIRE( soa.array<2>().size() == 32 );
     }
 }
 

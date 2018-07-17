@@ -62,8 +62,8 @@ namespace soacpp
         reference operator[]( size_type idx );
         const_reference operator[]( size_type idx ) const;
 
-        template<std::size_t I>
-        typename std::tuple_element<I, arrays>::type & getContainer()
+        template <std::size_t I>
+        typename std::tuple_element<I, arrays>::type & array()
         {
             return std::get<I>( data );
         }
