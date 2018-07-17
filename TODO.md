@@ -1,0 +1,11 @@
+- Remove dependency on STL in soa.h
+  - preprocessor define SOA_NO_STL?
+  - provide container config for push back, resize, ...
+- Add test with custom allocator
+- Add test with custom container
+- Add licence
+- Add coverage
+- Add Makefile
+- Add documentation
+- Add benchmarks
+- Add sanitizer builds
