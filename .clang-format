@@ -6,6 +6,6 @@ BinPackParameters: false
 BreakBeforeBraces: Allman
 ColumnLimit: 120
 Cpp11BracedListStyle: true
+NamespaceIndentation: All
 PointerAlignment: Middle
 SpacesInParentheses: true
-

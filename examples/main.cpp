@@ -11,8 +11,10 @@ struct Particle
     vec3 position;
     uint32_t color;
     bool is_active;
-    unsigned char _pading[3];
+    unsigned char _padding[3];
 };
+
+// order not important
 
 DECLARE_SOA_TYPE( Particle, is_active, position, color )
 
@@ -81,9 +83,9 @@ int main()
         std::get<1>( particle )[1] = 1.0f;
         std::get<1>( particle )[2] = 2.0f;
 
-        //std::get<velocity&>( particle )[0] = 2.0f;
-        //std::get<velocity&>( particle )[1] = 2.0f;
-        //std::get<velocity&>( particle )[2] = 2.0f;
+        // std::get<velocity&>( particle )[0] = 2.0f;
+        // std::get<velocity&>( particle )[1] = 2.0f;
+        // std::get<velocity&>( particle )[2] = 2.0f;
 
         std::get<color &>( particle ) = 3.0f;
     }

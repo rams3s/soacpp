@@ -11,7 +11,7 @@ namespace soacpp
         template <std::size_t count>
         struct std_array_helper
         {
-            template<typename T>
+            template <typename T>
             using type = std::array<T, count>;
         };
 
@@ -132,8 +132,8 @@ namespace soacpp
     using soa_array = soa<detail::std_array_helper<count>::template type, Attrs...>;
 } // namespace soacpp
 
-// helper macros
-// inspired from: https://stackoverflow.com/a/44479664/529915
+    // helper macros
+    // inspired from: https://stackoverflow.com/a/44479664/529915
 
 #define EVAL( ... ) __VA_ARGS__
 #define VARCOUNT( ... ) EVAL( VARCOUNT_I( __VA_ARGS__, 9, 8, 7, 6, 5, 4, 3, 2, 1, ) )
@@ -189,15 +189,15 @@ namespace soacpp
     public:                                                                                                            \
         struct reference                                                                                               \
         {                                                                                                              \
-            DECLARE_REFERENCE_ATTRIBUTES( __VA_ARGS__ );                                                                         \
+            DECLARE_REFERENCE_ATTRIBUTES( __VA_ARGS__ );                                                               \
         };                                                                                                             \
                                                                                                                        \
-        struct const_reference                                                                                               \
+        struct const_reference                                                                                         \
         {                                                                                                              \
-            DECLARE_CONST_REFERENCE_ATTRIBUTES( __VA_ARGS__ );                                                                         \
+            DECLARE_CONST_REFERENCE_ATTRIBUTES( __VA_ARGS__ );                                                         \
         };                                                                                                             \
                                                                                                                        \
-        using arrays = GET_TUPLE_TYPE( __VA_ARGS__ );                                                               \
+        using arrays = GET_TUPLE_TYPE( __VA_ARGS__ );                                                                  \
     };
 
 #endif
