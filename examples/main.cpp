@@ -71,11 +71,11 @@ int main()
     using position = vec3;
     using velocity = vec3;
     using color = uint32_t;
-    soacpp::soa<std::vector, is_active, position, velocity, color> particles( count );
+    soacpp::soa_vector<is_active, position, velocity, color> particles( count );
 
     for ( std::size_t i = 0; i < count; ++i )
     {
-        typename decltype( particles )::reference particle = particles[i];
+        auto particle = particles[i];
 
         std::get<0>( particle ) = ( ( i % 3 ) != 0u );
 

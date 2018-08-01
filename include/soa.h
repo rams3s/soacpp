@@ -2,19 +2,19 @@
 #define SOA_H
 
 #include <array>
+
+#define WITH_STL 1
+
+#if WITH_STL
+
 #include <vector>
+
+#endif
 
 namespace soacpp
 {
     namespace detail
     {
-        template <std::size_t count>
-        struct std_array_helper
-        {
-            template <typename T>
-            using type = std::array<T, count>;
-        };
-
         template <class... T>
         void call( T &&... /*unused*/ )
         {
@@ -54,86 +54,98 @@ namespace soacpp
         using const_reference = typename helper::const_reference;
         using arrays = typename helper::arrays;
 
-        soa() = default;
-        explicit soa( size_type count );
+        soa() noexcept = default;
 
-        // element access
+        reference operator[]( size_type idx )
+        {
+            return detail::index_apply<attribute_count>(
+                    [this, idx]( auto... Is ) -> reference
+                        { return {std::get<Is>( data )[idx]...}; } );
+        }
 
-        reference operator[]( size_type idx );
-        const_reference operator[]( size_type idx ) const;
+        const_reference operator[]( size_type idx ) const
+        {
+            return detail::index_apply<attribute_count>(
+                    [this, idx]( auto... Is ) -> reference
+                        { return {std::get<Is>( data )[idx]...}; } );
+        }
 
         template <std::size_t I>
-        typename std::tuple_element<I, arrays>::type & array()
+        typename std::tuple_element<I, arrays>::type &array()
         {
             return std::get<I>( data );
         }
 
-        bool empty() const noexcept;
-        size_type size() const noexcept;
-        size_type capacity() const noexcept;
-        void reserve( size_type count );
-        void resize( size_type count );
+        bool empty() const noexcept
+        {
+            return std::get<0>( data ).empty();
+        }
 
-    private:
+        size_type size() const noexcept
+        {
+            return std::get<0>( data ).size();
+        }
+
+    protected:
         arrays data;
 
         static constexpr std::size_t attribute_count = std::tuple_size<arrays>{};
     };
 
-    template <template <class...> class Container, typename... Attrs>
-    soa<Container, Attrs...>::soa( size_type count )
-    {
-        resize( count );
-    }
+#if WITH_STL
 
-    template <template <class...> class Container, typename... Attrs>
-    typename soa<Container, Attrs...>::reference soa<Container, Attrs...>::operator[]( size_type idx )
+    namespace detail
     {
-        return detail::index_apply<attribute_count>(
-            [this, idx]( auto... Is ) -> reference { return {std::get<Is>( data )[idx]...}; } );
-    }
-
-    template <template <class...> class Container, typename... Attrs>
-    bool soa<Container, Attrs...>::empty() const noexcept
-    {
-        return std::get<0>( data ).empty();
-    }
-
-    template <template <class...> class Container, typename... Attrs>
-    typename soa<Container, Attrs...>::size_type soa<Container, Attrs...>::size() const noexcept
-    {
-        return std::get<0>( data ).size();
-    }
-
-    template <template <class...> class Container, typename... Attrs>
-    typename soa<Container, Attrs...>::size_type soa<Container, Attrs...>::capacity() const noexcept
-    {
-        return std::get<0>( data ).capacity();
-    }
-
-    template <template <class...> class Container, typename... Attrs>
-    void soa<Container, Attrs...>::reserve( size_type count )
-    {
-        detail::index_apply<attribute_count>(
-            [this, count]( auto... Is ) { detail::call( ( std::get<Is>( data ).reserve( count ), true )... ); } );
-    }
-
-    template <template <class...> class Container, typename... Attrs>
-    void soa<Container, Attrs...>::resize( size_type count )
-    {
-        detail::index_apply<attribute_count>(
-            [this, count]( auto... Is ) { detail::call( ( std::get<Is>( data ).resize( count ), true )... ); } );
-    }
+        template <std::size_t count>
+        struct std_array_helper
+        {
+            template <typename T>
+            using type = std::array<T, count>;
+        };
+    } // namespace detail
 
     template <typename... Attrs>
-    using soa_vector = soa<std::vector, Attrs...>;
+    class soa_vector : public soa<std::vector, Attrs...>
+    {
+
+    public:
+        using typename soa<std::vector, Attrs...>::size_type;
+        using soa<std::vector, Attrs...>::attribute_count;
+
+        soa_vector() noexcept = default;
+
+        explicit soa_vector( size_type count )
+        {
+            resize( count );
+        }
+
+        size_type capacity() const noexcept
+        {
+            return std::get<0>( this->data ).capacity();
+        }
+
+        void reserve( size_type count )
+        {
+            detail::index_apply<attribute_count>(
+                    [this, count]( auto... Is )
+                        { detail::call(( std::get<Is>( this->data ).reserve( count ), true )... ); } );
+        }
+
+        void resize( size_type count )
+        {
+            detail::index_apply<attribute_count>(
+                    [this, count]( auto... Is )
+                        { detail::call(( std::get<Is>( this->data ).resize( count ), true )... ); } );
+        }
+    };
 
     template <std::size_t count, typename... Attrs>
     using soa_array = soa<detail::std_array_helper<count>::template type, Attrs...>;
+#endif
 } // namespace soacpp
 
-    // helper macros
-    // inspired from: https://stackoverflow.com/a/44479664/529915
+// helper macros
+// inspired from: https://stackoverflow.com/a/44479664/529915
 
 #define EVAL( ... ) __VA_ARGS__
 #define VARCOUNT( ... ) EVAL( VARCOUNT_I( __VA_ARGS__, 9, 8, 7, 6, 5, 4, 3, 2, 1, ) )
