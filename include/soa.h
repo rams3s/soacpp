@@ -66,7 +66,7 @@ namespace soacpp
         const_reference operator[]( size_type idx ) const
         {
             return detail::index_apply<attribute_count>(
-                    [this, idx]( auto... Is ) -> reference
+                    [this, idx]( auto... Is ) -> const_reference
                         { return {std::get<Is>( data )[idx]...}; } );
         }
 

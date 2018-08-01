@@ -56,7 +56,25 @@ TEST_CASE( "element access", "[soa]" )
         REQUIRE( std::get<2>( soa[3] ) == true );
     }
 
-    // :TODO: const
+    SECTION( "operator[] const" )
+    {
+        const auto & const_soa = soa;
+
+        REQUIRE( std::get<0>( const_soa[0] ) == 0 );
+        REQUIRE( std::get<0>( const_soa[1] ) == 1 );
+        REQUIRE( std::get<0>( const_soa[2] ) == 2 );
+        REQUIRE( std::get<0>( const_soa[3] ) == 3 );
+
+        REQUIRE( std::get<1>( const_soa[0] ) == 0.0f );
+        REQUIRE( std::get<1>( const_soa[1] ) == 2.0f );
+        REQUIRE( std::get<1>( const_soa[2] ) == 4.0f );
+        REQUIRE( std::get<1>( const_soa[3] ) == 6.0f );
+
+        REQUIRE( std::get<2>( const_soa[0] ) == false );
+        REQUIRE( std::get<2>( const_soa[1] ) == true );
+        REQUIRE( std::get<2>( const_soa[2] ) == false );
+        REQUIRE( std::get<2>( const_soa[3] ) == true );
+    }
 }
 
 TEST_CASE( "Capacity", "[soa]" )
