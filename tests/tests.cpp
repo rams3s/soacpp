@@ -127,29 +127,93 @@ TEST_CASE( "Capacity", "[soa]" )
         REQUIRE( soa.array<2>().size() == 32 );
     }
 
-    // :TODO: real unit test, not a functional test
-    SECTION( "iterators" )
+}
+
+TEST_CASE( "iterators", "[soa]" )
+{
+    soacpp::soa_vector<uint8_t, float, bool> soa(4);
+
+    SECTION( "begin" )
     {
-        soacpp::soa_array<16, uint8_t, float, bool> soa_array {};
-        uint8_t i = 0;
+        auto soa_it = soa.begin();
 
-        for ( auto it : soa_array )
-        {
-            std::get<0>( it ) = i;
-            std::get<1>( it ) = i * 2.0f;
-            std::get<2>( it ) = i % 2;
-            ++i;
-        }
+        REQUIRE( std::get<0>( soa_it ) == soa.array<0>().begin() );
+        REQUIRE( std::get<1>( soa_it ) == soa.array<1>().begin() );
+        REQUIRE( std::get<2>( soa_it ) == soa.array<2>().begin() );
+    }
 
-        REQUIRE( i == 16 );
-        i = 0;
+    SECTION( "end" )
+    {
+        auto soa_it = soa.end();
 
-        for ( auto it : soa_array )
-        {
-            REQUIRE( std::get<0>( it ) == i );
-            REQUIRE( std::fabs( std::get<1>( it ) - i * 2.0f ) < 0.000001f );
-            REQUIRE( std::get<2>( it ) == i % 2 );
-            ++i;
-        }
+        REQUIRE( std::get<0>( soa_it ) == soa.array<0>().end() );
+        REQUIRE( std::get<1>( soa_it ) == soa.array<1>().end() );
+        REQUIRE( std::get<2>( soa_it ) == soa.array<2>().end() );
     }
 }
+
+TEST_CASE( "soa_iterator", "[soa]" )
+{
+    soacpp::soa_vector<uint8_t, float, bool> soa(4);
+
+    SECTION( "operator++" )
+    {
+        auto soa_it = soa.begin();
+        auto it_0 = soa.array<0>().begin();
+        auto it_1 = soa.array<1>().begin();
+        auto it_2 = soa.array<2>().begin();
+
+        soa_it++;
+        it_0++;
+        it_1++;
+        it_2++;
+
+        REQUIRE( std::get<0>( soa_it ) == it_0 );
+        REQUIRE( std::get<1>( soa_it ) == it_1 );
+        REQUIRE( std::get<2>( soa_it ) == it_2 );
+
+        ++soa_it;
+        ++it_0;
+        ++it_1;
+        ++it_2;
+
+        REQUIRE( std::get<0>( soa_it ) == it_0 );
+        REQUIRE( std::get<1>( soa_it ) == it_1 );
+        REQUIRE( std::get<2>( soa_it ) == it_2 );
+
+        soa_it++;
+        ++soa_it;
+
+        REQUIRE( std::get<0>( soa_it ) == soa.array<0>().end() );
+        REQUIRE( std::get<1>( soa_it ) == soa.array<1>().end() );
+        REQUIRE( std::get<2>( soa_it ) == soa.array<2>().end() );
+    }
+
+    SECTION( "operator==/!=" )
+    {
+        auto soa_it = soa.begin();
+
+        REQUIRE( soa_it == soa.begin() );
+        REQUIRE( soa_it != soa.end() );
+
+        ++soa_it;
+
+        REQUIRE( soa_it != soa.begin() );
+        REQUIRE( soa_it != soa.end() );
+
+        ++soa_it;
+        ++soa_it;
+        ++soa_it;
+
+        REQUIRE( soa_it != soa.begin() );
+        REQUIRE( soa_it == soa.end() );
+    }
+
+    SECTION( "operator*" )
+    {
+        // :TODO:
+    }
+}
+
+// :TODO: other types of iterator
+
