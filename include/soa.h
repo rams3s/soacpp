@@ -2,14 +2,7 @@
 #define SOA_H
 
 #include <array>
-
-#define WITH_STL 1
-
-#if WITH_STL
-
 #include <vector>
-
-#endif
 
 namespace soacpp
 {
@@ -33,41 +26,135 @@ namespace soacpp
         }
     } // namespace detail
 
-    template <template <class...> class Container, typename... Attrs>
-    class soa_helper
+    template <template <class...> class Container, typename T>
+    class container_traits
     {
 
     public:
-        using reference = std::tuple<typename Container<Attrs>::reference...>;
-        using const_reference = std::tuple<typename Container<Attrs>::const_reference...>;
+        using reference = typename Container<T>::reference;
+        using const_reference = typename Container<T>::const_reference;
+        using pointer = typename Container<T>::pointer;
+        using const_pointer = typename Container<T>::const_pointer;
+        using difference_type = typename Container<T>::difference_type;
+        using value_type = typename Container<T>::value_type;
+    };
+
+    template <template <class...> class Container, typename... Attrs>
+    class soa_container_traits
+    {
+        template <typename T>
+        using traits = container_traits<Container, T>;
+
+    public:
+        using reference = std::tuple<typename traits<Attrs>::reference...>;
+        using const_reference = std::tuple<typename traits<Attrs>::const_reference...>;
+        using pointer = std::tuple<typename traits<Attrs>::pointer...>;
+        using const_pointer = std::tuple<typename traits<Attrs>::const_pointer...>;
+        using difference_type = std::tuple<typename traits<Attrs>::difference_type...>;
+        using value_type = std::tuple<typename traits<Attrs>::value_type...>;
+
         using arrays = std::tuple<Container<Attrs>...>;
+        static constexpr std::size_t attribute_count = std::tuple_size<arrays>{};
+    };
+
+    // :TODO: const_iterator, reverse_iterator, const_reverse_iterator
+
+    template <template <class...> class Container, typename... Attrs>
+    class soa_iterator : public std::tuple<typename Container<Attrs>::iterator...>
+    {
+        using traits = soa_container_traits<Container, Attrs...>;
+        using base = std::tuple<typename Container<Attrs>::iterator...>;
+
+    public:
+        using iterator_category = std::random_access_iterator_tag;
+        using value_type = typename traits::value_type;
+        using difference_type = typename traits::difference_type;
+        using pointer = typename traits::pointer;
+        using reference = typename traits::reference;
+
+        soa_iterator() = delete;
+
+        template< class... UTypes >
+        explicit soa_iterator( UTypes&&... args ) : base (args...)
+        {
+        }
+
+        soa_iterator & operator++()
+        {
+            detail::index_apply<traits::attribute_count>(
+                    [this]( auto... Is )
+                        { detail::call(( std::get<Is>( *this )++, true )... ); } );
+
+            return *this;
+        }
+
+        const soa_iterator operator++(int)
+        {
+            soa_iterator retval = *this;
+            ++(*this);
+
+            return retval;
+        }
+
+        bool operator==(soa_iterator other) const
+        {
+            // :TODO: assert all other iterators in tuples do match
+
+            return std::get<0>( *this ) == std::get<0>( other );
+        }
+
+        bool operator!=(soa_iterator other) const
+        {
+            return !(*this == other);
+        }
+
+        reference operator*() const {
+            return detail::index_apply<traits::attribute_count>(
+                    [this]( auto... Is ) -> reference
+                        { return { ( *std::get<Is>( *this ) )...}; } );
+        }
     };
 
     template <template <class...> class Container, typename... Attrs>
     class soa
     {
+        using traits = soa_container_traits<Container, Attrs...>;
 
     public:
-        using helper = soa_helper<Container, Attrs...>;
         using size_type = std::size_t;
-        using reference = typename helper::reference;
-        using const_reference = typename helper::const_reference;
-        using arrays = typename helper::arrays;
+        using reference = typename traits::reference;
+        using const_reference = typename traits::const_reference;
+        using iterator = soa_iterator<Container, Attrs...>;
+        using arrays = typename traits::arrays;
 
         soa() noexcept = default;
+
+        iterator begin() noexcept
+        {
+            return detail::index_apply<attribute_count>(
+                    [this]( auto... Is ) -> iterator
+                        { return iterator {std::begin( std::get<Is>( data ) )...}; } );
+        }
+
+        iterator end() noexcept
+        {
+            return detail::index_apply<attribute_count>(
+                    [this]( auto... Is ) -> iterator
+                        { return iterator {std::end( std::get<Is>( data ) )...}; } );
+        }
 
         reference operator[]( size_type idx )
         {
             return detail::index_apply<attribute_count>(
                     [this, idx]( auto... Is ) -> reference
-                        { return {std::get<Is>( data )[idx]...}; } );
+                        { return reference {std::get<Is>( data )[idx]...}; } );
         }
 
         const_reference operator[]( size_type idx ) const
         {
             return detail::index_apply<attribute_count>(
                     [this, idx]( auto... Is ) -> const_reference
-                        { return {std::get<Is>( data )[idx]...}; } );
+                        { return const_reference {std::get<Is>( data )[idx]...}; } );
         }
 
         template <std::size_t I>
@@ -89,20 +176,8 @@ namespace soacpp
     protected:
         arrays data;
 
-        static constexpr std::size_t attribute_count = std::tuple_size<arrays>{};
+        static constexpr std::size_t attribute_count = traits::attribute_count;
     };
-
-#if WITH_STL
-
-    namespace detail
-    {
-        template <std::size_t count>
-        struct std_array_helper
-        {
-            template <typename T>
-            using type = std::array<T, count>;
-        };
-    } // namespace detail
 
     template <typename... Attrs>
     class soa_vector : public soa<std::vector, Attrs...>
@@ -139,9 +214,18 @@ namespace soacpp
         }
     };
 
+    namespace detail
+    {
+        template <std::size_t count>
+        struct std_array_helper
+        {
+            template <typename T>
+            using type = std::array<T, count>;
+        };
+    } // namespace detail
+
     template <std::size_t count, typename... Attrs>
     using soa_array = soa<detail::std_array_helper<count>::template type, Attrs...>;
-#endif
 } // namespace soacpp
 
 // helper macros
@@ -194,22 +278,16 @@ namespace soacpp
 
 #define DECLARE_SOA_TYPE( CLASS_, ... )                                                                                \
     template <template <class...> class Container>                                                                     \
-    class soacpp::soa_helper<Container, CLASS_>                                                                        \
+    class soacpp::soa_container_traits<Container, CLASS_>                                                              \
     {                                                                                                                  \
         using adapted_type = CLASS_;                                                                                   \
                                                                                                                        \
     public:                                                                                                            \
-        struct reference                                                                                               \
-        {                                                                                                              \
-            DECLARE_REFERENCE_ATTRIBUTES( __VA_ARGS__ );                                                               \
-        };                                                                                                             \
-                                                                                                                       \
-        struct const_reference                                                                                         \
-        {                                                                                                              \
-            DECLARE_CONST_REFERENCE_ATTRIBUTES( __VA_ARGS__ );                                                         \
-        };                                                                                                             \
+        struct reference { DECLARE_REFERENCE_ATTRIBUTES( __VA_ARGS__ ); };                                             \
+        struct const_reference { DECLARE_CONST_REFERENCE_ATTRIBUTES( __VA_ARGS__ ); };                                 \
                                                                                                                        \
         using arrays = GET_TUPLE_TYPE( __VA_ARGS__ );                                                                  \
+        static constexpr std::size_t attribute_count = std::tuple_size<arrays>{};                                      \
     };
 
 #endif

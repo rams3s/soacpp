@@ -72,12 +72,11 @@ int main()
     using velocity = vec3;
     using color = uint32_t;
     soacpp::soa_vector<is_active, position, velocity, color> particles( count );
+    uint32_t i = 0;
 
-    for ( std::size_t i = 0; i < count; ++i )
+    for ( auto particle : particles )
     {
-        auto particle = particles[i];
-
-        std::get<0>( particle ) = ( ( i % 3 ) != 0u );
+        std::get<0>( particle ) = ( ( i++ % 3 ) != 0u );
 
         std::get<1>( particle )[0] = 0.0f;
         std::get<1>( particle )[1] = 1.0f;

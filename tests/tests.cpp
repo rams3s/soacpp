@@ -126,4 +126,30 @@ TEST_CASE( "Capacity", "[soa]" )
         REQUIRE( soa.array<1>().size() == 32 );
         REQUIRE( soa.array<2>().size() == 32 );
     }
+
+    // :TODO: real unit test, not a functional test
+    SECTION( "iterators" )
+    {
+        soacpp::soa_array<16, uint8_t, float, bool> soa_array {};
+        uint8_t i = 0;
+
+        for ( auto it : soa_array )
+        {
+            std::get<0>( it ) = i;
+            std::get<1>( it ) = i * 2.0f;
+            std::get<2>( it ) = i % 2;
+            ++i;
+        }
+
+        REQUIRE( i == 16 );
+        i = 0;
+
+        for ( auto it : soa_array )
+        {
+            REQUIRE( std::get<0>( it ) == i );
+            REQUIRE( std::fabs( std::get<1>( it ) - i * 2.0f ) < 0.000001f );
+            REQUIRE( std::get<2>( it ) == i % 2 );
+            ++i;
+        }
+    }
 }
