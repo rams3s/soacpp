@@ -1,3 +1,6 @@
+- constexpr
+- noexcept
+- Examples with strong typedefs
 - Remove dependency on STL in soa.h
   - preprocessor define SOA_NO_STL?
   - provide container config for push back, resize, ...

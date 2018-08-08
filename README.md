@@ -32,6 +32,8 @@ The library provides the `DECLARE_SOA_TYPE` macro to ease transitioning existing
 
 ### Customize container type
 
+Underlying container should be a ContiguousContainer (i.e. a Container that stores objects in contiguous memory locations). LINK to cppref
+
 ### Customize reference type
 
 Providing a custom reference type (must be aggregate initializable http://en.cppreference.com/w/cpp/language/aggregate_initialization) can help make code easier to read / maintain.
