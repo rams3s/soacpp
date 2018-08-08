@@ -180,12 +180,17 @@ namespace soacpp
     };
 
     template <typename... Attrs>
-    class soa_vector : public soa<std::vector, Attrs...>
+    class soa_vector : private soa<std::vector, Attrs...>
     {
+        using base = soa<std::vector, Attrs...>;
+        using base::attribute_count;
 
     public:
-        using typename soa<std::vector, Attrs...>::size_type;
-        using soa<std::vector, Attrs...>::attribute_count;
+        using typename base::size_type;
+        using typename base::reference;
+        using typename base::const_reference;
+        using typename base::iterator;
+        using typename base::arrays;
 
         soa_vector() noexcept = default;
 
@@ -193,6 +198,13 @@ namespace soacpp
         {
             resize( count );
         }
+
+        using base::operator[];
+        using base::begin;
+        using base::end;
+        using base::array;
+        using base::empty;
+        using base::size;
 
         size_type capacity() const noexcept
         {
