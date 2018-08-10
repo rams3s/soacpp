@@ -35,7 +35,6 @@ namespace soacpp
         using const_reference = typename Container<T>::const_reference;
         using pointer = typename Container<T>::pointer;
         using const_pointer = typename Container<T>::const_pointer;
-        using difference_type = typename Container<T>::difference_type;
         using value_type = typename Container<T>::value_type;
     };
 
@@ -50,7 +49,6 @@ namespace soacpp
         using const_reference = std::tuple<typename traits<Attrs>::const_reference...>;
         using pointer = std::tuple<typename traits<Attrs>::pointer...>;
         using const_pointer = std::tuple<typename traits<Attrs>::const_pointer...>;
-        using difference_type = std::tuple<typename traits<Attrs>::difference_type...>;
         using value_type = std::tuple<typename traits<Attrs>::value_type...>;
 
         using arrays = std::tuple<Container<Attrs>...>;
@@ -68,7 +66,6 @@ namespace soacpp
     public:
         using iterator_category = std::random_access_iterator_tag;
         using value_type = typename traits::value_type;
-        using difference_type = typename traits::difference_type;
         using pointer = typename traits::pointer;
         using reference = typename traits::reference;
 
@@ -108,10 +105,11 @@ namespace soacpp
             return !(*this == other);
         }
 
-        reference operator*() const {
+        reference operator*() const
+        {
             return detail::index_apply<traits::attribute_count>(
-                    [this]( auto... Is ) -> reference
-                        { return { ( *std::get<Is>( *this ) )...}; } );
+                    [this]( auto... Is )
+                        { return reference { ( *std::get<Is>( *this ) )...}; } );
         }
     };
 
@@ -132,28 +130,28 @@ namespace soacpp
         iterator begin() noexcept
         {
             return detail::index_apply<attribute_count>(
-                    [this]( auto... Is ) -> iterator
+                    [this]( auto... Is )
                         { return iterator {std::begin( std::get<Is>( data ) )...}; } );
         }
 
         iterator end() noexcept
         {
             return detail::index_apply<attribute_count>(
-                    [this]( auto... Is ) -> iterator
+                    [this]( auto... Is )
                         { return iterator {std::end( std::get<Is>( data ) )...}; } );
         }
 
         reference operator[]( size_type idx )
         {
             return detail::index_apply<attribute_count>(
-                    [this, idx]( auto... Is ) -> reference
+                    [this, idx]( auto... Is )
                         { return reference {std::get<Is>( data )[idx]...}; } );
         }
 
         const_reference operator[]( size_type idx ) const
         {
             return detail::index_apply<attribute_count>(
-                    [this, idx]( auto... Is ) -> const_reference
+                    [this, idx]( auto... Is )
                         { return const_reference {std::get<Is>( data )[idx]...}; } );
         }
 
@@ -253,32 +251,27 @@ namespace soacpp
 #define TUPLE_TAIL( ... ) EVAL( TUPLE_TAIL_I( __VA_ARGS__ ) )
 #define TUPLE_TAIL_I( X, ... ) ( __VA_ARGS__ )
 
-#define TRANSFORM( NAME_, ARGS_ ) GLUE( TRANSFORM_, VARCOUNT ARGS_ )( NAME_, ARGS_ )
-#define TRANSFORM_1( NAME_, ARGS_ ) GLUE( NAME_, _LAST ) ARGS_
-#define TRANSFORM_2( NAME_, ARGS_ ) NAME_( FIRST ARGS_ ) TRANSFORM_1( NAME_, TUPLE_TAIL ARGS_ )
-#define TRANSFORM_3( NAME_, ARGS_ ) NAME_( FIRST ARGS_ ) TRANSFORM_2( NAME_, TUPLE_TAIL ARGS_ )
-#define TRANSFORM_4( NAME_, ARGS_ ) NAME_( FIRST ARGS_ ) TRANSFORM_3( NAME_, TUPLE_TAIL ARGS_ )
-#define TRANSFORM_5( NAME_, ARGS_ ) NAME_( FIRST ARGS_ ) TRANSFORM_4( NAME_, TUPLE_TAIL ARGS_ )
-#define TRANSFORM_6( NAME_, ARGS_ ) NAME_( FIRST ARGS_ ) TRANSFORM_5( NAME_, TUPLE_TAIL ARGS_ )
-#define TRANSFORM_7( NAME_, ARGS_ ) NAME_( FIRST ARGS_ ) TRANSFORM_6( NAME_, TUPLE_TAIL ARGS_ )
-#define TRANSFORM_8( NAME_, ARGS_ ) NAME_( FIRST ARGS_ ) TRANSFORM_7( NAME_, TUPLE_TAIL ARGS_ )
-#define TRANSFORM_9( NAME_, ARGS_ ) NAME_( FIRST ARGS_ ) TRANSFORM_8( NAME_, TUPLE_TAIL ARGS_ )
+#define TRANSFORM( NAME_, ARGS_, EXTRA_ ) GLUE( TRANSFORM_, VARCOUNT ARGS_ )( NAME_, ARGS_, EXTRA_ )
+#define TRANSFORM_1( NAME_, ARGS_, EXTRA_ ) GLUE( NAME_, _LAST )( FIRST ARGS_, EXTRA_ )
+#define TRANSFORM_2( NAME_, ARGS_, EXTRA_ ) NAME_( FIRST ARGS_, EXTRA_ ) TRANSFORM_1( NAME_, TUPLE_TAIL ARGS_, EXTRA_ )
+#define TRANSFORM_3( NAME_, ARGS_, EXTRA_ ) NAME_( FIRST ARGS_, EXTRA_ ) TRANSFORM_2( NAME_, TUPLE_TAIL ARGS_, EXTRA_ )
+#define TRANSFORM_4( NAME_, ARGS_, EXTRA_ ) NAME_( FIRST ARGS_, EXTRA_ ) TRANSFORM_3( NAME_, TUPLE_TAIL ARGS_, EXTRA_ )
+#define TRANSFORM_5( NAME_, ARGS_, EXTRA_ ) NAME_( FIRST ARGS_, EXTRA_ ) TRANSFORM_4( NAME_, TUPLE_TAIL ARGS_, EXTRA_ )
+#define TRANSFORM_6( NAME_, ARGS_, EXTRA_ ) NAME_( FIRST ARGS_, EXTRA_ ) TRANSFORM_5( NAME_, TUPLE_TAIL ARGS_, EXTRA_ )
+#define TRANSFORM_7( NAME_, ARGS_, EXTRA_ ) NAME_( FIRST ARGS_, EXTRA_ ) TRANSFORM_6( NAME_, TUPLE_TAIL ARGS_, EXTRA_ )
+#define TRANSFORM_8( NAME_, ARGS_, EXTRA_ ) NAME_( FIRST ARGS_, EXTRA_ ) TRANSFORM_7( NAME_, TUPLE_TAIL ARGS_, EXTRA_ )
+#define TRANSFORM_9( NAME_, ARGS_, EXTRA_ ) NAME_( FIRST ARGS_, EXTRA_ ) TRANSFORM_8( NAME_, TUPLE_TAIL ARGS_, EXTRA_ )
 
-#define GET_CONTAINER_TYPE( ATTRIBUTE_ ) Container<decltype( adapted_type::ATTRIBUTE_ )>
-
-#define GET_TUPLE_ELEMENT_LAST( ATTRIBUTE_ ) EVAL( GET_CONTAINER_TYPE( ATTRIBUTE_ ) )
-#define GET_TUPLE_ELEMENT( ATTRIBUTE_ ) EVAL( GET_TUPLE_ELEMENT_LAST( ATTRIBUTE_ ) ),
+#define GET_TUPLE_ELEMENT_LAST( ATTRIBUTE_, UNUSED_  ) Container< decltype( adapted_type::ATTRIBUTE_ ) >
+#define GET_TUPLE_ELEMENT( ATTRIBUTE_, UNUSED_ ) EVAL( GET_TUPLE_ELEMENT_LAST( ATTRIBUTE_, UNUSED_ ) ),
 #define MAKE_TUPLE_TYPE_LIST( ... ) < __VA_ARGS__ >
 #define GET_TUPLE_TYPE( ... )                                                                                          \
-    std::tuple EVAL( MAKE_TUPLE_TYPE_LIST( TRANSFORM( GET_TUPLE_ELEMENT, ( __VA_ARGS__ ) ) ) )
+    std::tuple EVAL( MAKE_TUPLE_TYPE_LIST( TRANSFORM( GET_TUPLE_ELEMENT, ( __VA_ARGS__ ), 0 ) ) )
 
-#define DECLARE_REFERENCE_ATTRIBUTE_LAST( ATTRIBUTE_ ) typename GET_CONTAINER_TYPE( ATTRIBUTE_ )::reference ATTRIBUTE_
-#define DECLARE_REFERENCE_ATTRIBUTE( ATTRIBUTE_ ) EVAL( DECLARE_REFERENCE_ATTRIBUTE_LAST( ATTRIBUTE_) );
-#define DECLARE_REFERENCE_ATTRIBUTES( ... ) TRANSFORM( DECLARE_REFERENCE_ATTRIBUTE, ( __VA_ARGS__ ) )
-
-#define DECLARE_CONST_REFERENCE_ATTRIBUTE_LAST( ATTRIBUTE_ ) typename GET_CONTAINER_TYPE( ATTRIBUTE_ )::const_reference ATTRIBUTE_
-#define DECLARE_CONST_REFERENCE_ATTRIBUTE( ATTRIBUTE_ ) EVAL( DECLARE_CONST_REFERENCE_ATTRIBUTE_LAST( ATTRIBUTE_ ) );
-#define DECLARE_CONST_REFERENCE_ATTRIBUTES( ... ) TRANSFORM( DECLARE_CONST_REFERENCE_ATTRIBUTE, ( __VA_ARGS__ ) )
+#define DECLARE_ATTRIBUTE_LAST( ATTRIBUTE_, TYPE_ ) \
+    typename container_traits< Container, decltype( adapted_type::ATTRIBUTE_ ) >::TYPE_ ATTRIBUTE_
+#define DECLARE_ATTRIBUTE( ATTRIBUTE_, TYPE_ ) EVAL( DECLARE_ATTRIBUTE_LAST( ATTRIBUTE_, TYPE_ ) );
+#define DECLARE_ATTRIBUTES( TYPE_, ... ) TRANSFORM( DECLARE_ATTRIBUTE, ( __VA_ARGS__ ), TYPE_ )
 
 #define DECLARE_SOA_TYPE( CLASS_, ... )                                                                                \
     template <template <class...> class Container>                                                                     \
@@ -287,11 +280,13 @@ namespace soacpp
         using adapted_type = CLASS_;                                                                                   \
                                                                                                                        \
     public:                                                                                                            \
-        struct reference { DECLARE_REFERENCE_ATTRIBUTES( __VA_ARGS__ ); };                                             \
-        struct const_reference { DECLARE_CONST_REFERENCE_ATTRIBUTES( __VA_ARGS__ ); };                                 \
+        struct reference { DECLARE_ATTRIBUTES( reference, __VA_ARGS__ ); };                                            \
+        struct const_reference { DECLARE_ATTRIBUTES( const_reference, __VA_ARGS__ ); };                                \
+        struct pointer { DECLARE_ATTRIBUTES( pointer, __VA_ARGS__ ); };                                                \
+        struct const_pointer { DECLARE_ATTRIBUTES( const_pointer, __VA_ARGS__ ); };                                    \
+        struct value_type { DECLARE_ATTRIBUTES( value_type, __VA_ARGS__ ); };                                          \
                                                                                                                        \
         using arrays = GET_TUPLE_TYPE( __VA_ARGS__ );                                                                  \
         static constexpr std::size_t attribute_count = std::tuple_size<arrays>{};                                      \
     };
-
 #endif
