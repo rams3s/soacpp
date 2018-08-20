@@ -126,12 +126,11 @@ TEST_CASE( "Capacity", "[soa]" )
         REQUIRE( soa.array<1>().size() == 32 );
         REQUIRE( soa.array<2>().size() == 32 );
     }
-
 }
 
 TEST_CASE( "iterators", "[soa]" )
 {
-    soacpp::soa_vector<uint8_t, float, bool> soa(4);
+    soacpp::soa_vector<uint8_t, float, bool> soa( 4 );
 
     SECTION( "begin" )
     {
@@ -154,7 +153,7 @@ TEST_CASE( "iterators", "[soa]" )
 
 TEST_CASE( "soa_iterator", "[soa]" )
 {
-    soacpp::soa_vector<uint8_t, float, bool> soa(4);
+    soacpp::soa_vector<uint8_t, float, bool> soa( 4 );
 
     SECTION( "operator++" )
     {
@@ -216,4 +215,3 @@ TEST_CASE( "soa_iterator", "[soa]" )
 }
 
 // :TODO: other types of iterator
-

@@ -71,45 +71,44 @@ namespace soacpp
 
         soa_iterator() = delete;
 
-        template< class... UTypes >
-        explicit soa_iterator( UTypes&&... args ) : base (args...)
+        template <class... UTypes>
+        explicit soa_iterator( UTypes &&... args )
+            : base( args... )
         {
         }
 
         soa_iterator & operator++()
         {
             detail::index_apply<traits::attribute_count>(
-                    [this]( auto... Is )
-                        { detail::call(( std::get<Is>( *this )++, true )... ); } );
+                [this]( auto... Is ) { detail::call( ( std::get<Is>( *this )++, true )... ); } );
 
             return *this;
         }
 
-        const soa_iterator operator++(int)
+        const soa_iterator operator++( int )
         {
             soa_iterator retval = *this;
-            ++(*this);
+            ++( *this );
 
             return retval;
         }
 
-        bool operator==(soa_iterator other) const
+        bool operator==( soa_iterator other ) const
         {
             // :TODO: assert all other iterators in tuples do match
 
             return std::get<0>( *this ) == std::get<0>( other );
         }
 
-        bool operator!=(soa_iterator other) const
+        bool operator!=( soa_iterator other ) const
         {
-            return !(*this == other);
+            return !( *this == other );
         }
 
         reference operator*() const
         {
             return detail::index_apply<traits::attribute_count>(
-                    [this]( auto... Is )
-                        { return reference { ( *std::get<Is>( *this ) )...}; } );
+                [this]( auto... Is ) { return reference{( *std::get<Is>( *this ) )...}; } );
         }
     };
 
@@ -130,33 +129,29 @@ namespace soacpp
         iterator begin() noexcept
         {
             return detail::index_apply<attribute_count>(
-                    [this]( auto... Is )
-                        { return iterator {std::begin( std::get<Is>( data ) )...}; } );
+                [this]( auto... Is ) { return iterator{std::begin( std::get<Is>( data ) )...}; } );
         }
 
         iterator end() noexcept
         {
             return detail::index_apply<attribute_count>(
-                    [this]( auto... Is )
-                        { return iterator {std::end( std::get<Is>( data ) )...}; } );
+                [this]( auto... Is ) { return iterator{std::end( std::get<Is>( data ) )...}; } );
         }
 
         reference operator[]( size_type idx )
         {
             return detail::index_apply<attribute_count>(
-                    [this, idx]( auto... Is )
-                        { return reference {std::get<Is>( data )[idx]...}; } );
+                [this, idx]( auto... Is ) { return reference{std::get<Is>( data )[idx]...}; } );
         }
 
         const_reference operator[]( size_type idx ) const
         {
             return detail::index_apply<attribute_count>(
-                    [this, idx]( auto... Is )
-                        { return const_reference {std::get<Is>( data )[idx]...}; } );
+                [this, idx]( auto... Is ) { return const_reference{std::get<Is>( data )[idx]...}; } );
         }
 
         template <std::size_t I>
-        typename std::tuple_element<I, arrays>::type &array()
+        typename std::tuple_element<I, arrays>::type & array()
         {
             return std::get<I>( data );
         }
@@ -211,16 +206,16 @@ namespace soacpp
 
         void reserve( size_type count )
         {
-            detail::index_apply<attribute_count>(
-                    [this, count]( auto... Is )
-                        { detail::call(( std::get<Is>( this->data ).reserve( count ), true )... ); } );
+            detail::index_apply<attribute_count>( [this, count]( auto... Is ) {
+                detail::call( ( std::get<Is>( this->data ).reserve( count ), true )... );
+            } );
         }
 
         void resize( size_type count )
         {
-            detail::index_apply<attribute_count>(
-                    [this, count]( auto... Is )
-                        { detail::call(( std::get<Is>( this->data ).resize( count ), true )... ); } );
+            detail::index_apply<attribute_count>( [this, count]( auto... Is ) {
+                detail::call( ( std::get<Is>( this->data ).resize( count ), true )... );
+            } );
         }
     };
 
@@ -262,18 +257,18 @@ namespace soacpp
 #define TRANSFORM_8( NAME_, ARGS_, EXTRA_ ) NAME_( FIRST ARGS_, EXTRA_ ) TRANSFORM_7( NAME_, TUPLE_TAIL ARGS_, EXTRA_ )
 #define TRANSFORM_9( NAME_, ARGS_, EXTRA_ ) NAME_( FIRST ARGS_, EXTRA_ ) TRANSFORM_8( NAME_, TUPLE_TAIL ARGS_, EXTRA_ )
 
-#define GET_ELEMENT_TYPE_LAST( ATTRIBUTE_, CLASS_  ) decltype( CLASS_::ATTRIBUTE_ )
+#define GET_ELEMENT_TYPE_LAST( ATTRIBUTE_, CLASS_ ) decltype( CLASS_::ATTRIBUTE_ )
 #define GET_ELEMENT_TYPE( ATTRIBUTE_, CLASS_ ) EVAL( GET_ELEMENT_TYPE_LAST( ATTRIBUTE_, CLASS_ ) ),
 #define GET_COMMA_SEPARATED_ELEMENT_TYPES( CLASS_, ... ) TRANSFORM( GET_ELEMENT_TYPE, ( __VA_ARGS__ ), CLASS_ )
 
-#define GET_TUPLE_ELEMENT_LAST( ATTRIBUTE_, UNUSED_  ) Container< decltype( adapted_type::ATTRIBUTE_ ) >
+#define GET_TUPLE_ELEMENT_LAST( ATTRIBUTE_, UNUSED_ ) Container<decltype( adapted_type::ATTRIBUTE_ )>
 #define GET_TUPLE_ELEMENT( ATTRIBUTE_, UNUSED_ ) EVAL( GET_TUPLE_ELEMENT_LAST( ATTRIBUTE_, UNUSED_ ) ),
 #define MAKE_TUPLE_TYPE_LIST( ... ) < __VA_ARGS__ >
 #define GET_TUPLE_TYPE( ... )                                                                                          \
     std::tuple EVAL( MAKE_TUPLE_TYPE_LIST( TRANSFORM( GET_TUPLE_ELEMENT, ( __VA_ARGS__ ), 0 ) ) )
 
-#define DECLARE_ATTRIBUTE_LAST( ATTRIBUTE_, TYPE_ ) \
-    typename container_traits< Container, decltype( adapted_type::ATTRIBUTE_ ) >::TYPE_ ATTRIBUTE_
+#define DECLARE_ATTRIBUTE_LAST( ATTRIBUTE_, TYPE_ )                                                                    \
+    typename container_traits<Container, decltype( adapted_type::ATTRIBUTE_ )>::TYPE_ ATTRIBUTE_
 #define DECLARE_ATTRIBUTE( ATTRIBUTE_, TYPE_ ) EVAL( DECLARE_ATTRIBUTE_LAST( ATTRIBUTE_, TYPE_ ) );
 #define DECLARE_ATTRIBUTES( TYPE_, ... ) TRANSFORM( DECLARE_ATTRIBUTE, ( __VA_ARGS__ ), TYPE_ )
 
@@ -285,8 +280,14 @@ namespace soacpp
         using adapted_type = CLASS_;                                                                                   \
                                                                                                                        \
     public:                                                                                                            \
-        struct reference { DECLARE_ATTRIBUTES( reference, __VA_ARGS__ ); };                                            \
-        struct const_reference { DECLARE_ATTRIBUTES( const_reference, __VA_ARGS__ ); };                                \
+        struct reference                                                                                               \
+        {                                                                                                              \
+            DECLARE_ATTRIBUTES( reference, __VA_ARGS__ );                                                              \
+        };                                                                                                             \
+        struct const_reference                                                                                         \
+        {                                                                                                              \
+            DECLARE_ATTRIBUTES( const_reference, __VA_ARGS__ );                                                        \
+        };                                                                                                             \
                                                                                                                        \
         using iterator = soa_iterator<Container, CLASS_>;                                                              \
                                                                                                                        \

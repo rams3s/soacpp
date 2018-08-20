@@ -9,3 +9,6 @@ Cpp11BracedListStyle: true
 NamespaceIndentation: All
 PointerAlignment: Middle
 SpacesInParentheses: true
+SortUsingDeclarations: false
+AllowShortFunctionsOnASingleLine: None
+
