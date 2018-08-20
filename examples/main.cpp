@@ -14,8 +14,6 @@ struct Particle
     unsigned char _padding[3];
 };
 
-// order not important
-
 DECLARE_SOA_TYPE( Particle, is_active, position, color )
 
 int main()
@@ -44,10 +42,8 @@ int main()
 
         for ( std::size_t j = 0; j < loop_count; ++j )
         {
-            for ( std::size_t i = 0; i < count; ++i )
+            for ( decltype(auto) particle : particles )
             {
-                decltype( auto ) particle = particles[i];
-
                 if ( particle.is_active )
                 {
                     particle.position[0] += 3.0f;

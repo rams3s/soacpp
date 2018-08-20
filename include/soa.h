@@ -33,10 +33,12 @@ namespace soacpp
     public:
         using reference = typename Container<T>::reference;
         using const_reference = typename Container<T>::const_reference;
-        using pointer = typename Container<T>::pointer;
-        using const_pointer = typename Container<T>::const_pointer;
-        using value_type = typename Container<T>::value_type;
+
+        using iterator = typename Container<T>::iterator;
     };
+
+    template <template <class...> class Container, typename... Attrs>
+    class soa_iterator;
 
     template <template <class...> class Container, typename... Attrs>
     class soa_container_traits
@@ -47,9 +49,9 @@ namespace soacpp
     public:
         using reference = std::tuple<typename traits<Attrs>::reference...>;
         using const_reference = std::tuple<typename traits<Attrs>::const_reference...>;
-        using pointer = std::tuple<typename traits<Attrs>::pointer...>;
-        using const_pointer = std::tuple<typename traits<Attrs>::const_pointer...>;
-        using value_type = std::tuple<typename traits<Attrs>::value_type...>;
+
+        using iterator_base = std::tuple<typename traits<Attrs>::iterator...>;
+        using iterator = soa_iterator<Container, Attrs...>;
 
         using arrays = std::tuple<Container<Attrs>...>;
         static constexpr std::size_t attribute_count = std::tuple_size<arrays>{};
@@ -58,15 +60,13 @@ namespace soacpp
     // :TODO: const_iterator, reverse_iterator, const_reverse_iterator
 
     template <template <class...> class Container, typename... Attrs>
-    class soa_iterator : public std::tuple<typename Container<Attrs>::iterator...>
+    class soa_iterator : public soa_container_traits<Container, Attrs...>::iterator_base
     {
         using traits = soa_container_traits<Container, Attrs...>;
-        using base = std::tuple<typename Container<Attrs>::iterator...>;
+        using base = typename traits::iterator_base;
 
     public:
         using iterator_category = std::random_access_iterator_tag;
-        using value_type = typename traits::value_type;
-        using pointer = typename traits::pointer;
         using reference = typename traits::reference;
 
         soa_iterator() = delete;
@@ -122,7 +122,7 @@ namespace soacpp
         using size_type = std::size_t;
         using reference = typename traits::reference;
         using const_reference = typename traits::const_reference;
-        using iterator = soa_iterator<Container, Attrs...>;
+        using iterator = typename traits::iterator;
         using arrays = typename traits::arrays;
 
         soa() noexcept = default;
@@ -262,6 +262,10 @@ namespace soacpp
 #define TRANSFORM_8( NAME_, ARGS_, EXTRA_ ) NAME_( FIRST ARGS_, EXTRA_ ) TRANSFORM_7( NAME_, TUPLE_TAIL ARGS_, EXTRA_ )
 #define TRANSFORM_9( NAME_, ARGS_, EXTRA_ ) NAME_( FIRST ARGS_, EXTRA_ ) TRANSFORM_8( NAME_, TUPLE_TAIL ARGS_, EXTRA_ )
 
+#define GET_ELEMENT_TYPE_LAST( ATTRIBUTE_, CLASS_  ) decltype( CLASS_::ATTRIBUTE_ )
+#define GET_ELEMENT_TYPE( ATTRIBUTE_, CLASS_ ) EVAL( GET_ELEMENT_TYPE_LAST( ATTRIBUTE_, CLASS_ ) ),
+#define GET_COMMA_SEPARATED_ELEMENT_TYPES( CLASS_, ... ) TRANSFORM( GET_ELEMENT_TYPE, ( __VA_ARGS__ ), CLASS_ )
+
 #define GET_TUPLE_ELEMENT_LAST( ATTRIBUTE_, UNUSED_  ) Container< decltype( adapted_type::ATTRIBUTE_ ) >
 #define GET_TUPLE_ELEMENT( ATTRIBUTE_, UNUSED_ ) EVAL( GET_TUPLE_ELEMENT_LAST( ATTRIBUTE_, UNUSED_ ) ),
 #define MAKE_TUPLE_TYPE_LIST( ... ) < __VA_ARGS__ >
@@ -276,17 +280,18 @@ namespace soacpp
 #define DECLARE_SOA_TYPE( CLASS_, ... )                                                                                \
     template <template <class...> class Container>                                                                     \
     class soacpp::soa_container_traits<Container, CLASS_>                                                              \
+        : public soacpp::soa_container_traits<Container, GET_COMMA_SEPARATED_ELEMENT_TYPES( CLASS_, __VA_ARGS__ )>     \
     {                                                                                                                  \
         using adapted_type = CLASS_;                                                                                   \
                                                                                                                        \
     public:                                                                                                            \
         struct reference { DECLARE_ATTRIBUTES( reference, __VA_ARGS__ ); };                                            \
         struct const_reference { DECLARE_ATTRIBUTES( const_reference, __VA_ARGS__ ); };                                \
-        struct pointer { DECLARE_ATTRIBUTES( pointer, __VA_ARGS__ ); };                                                \
-        struct const_pointer { DECLARE_ATTRIBUTES( const_pointer, __VA_ARGS__ ); };                                    \
-        struct value_type { DECLARE_ATTRIBUTES( value_type, __VA_ARGS__ ); };                                          \
+                                                                                                                       \
+        using iterator = soa_iterator<Container, CLASS_>;                                                              \
                                                                                                                        \
         using arrays = GET_TUPLE_TYPE( __VA_ARGS__ );                                                                  \
         static constexpr std::size_t attribute_count = std::tuple_size<arrays>{};                                      \
     };
+
 #endif
