@@ -2,6 +2,7 @@
 #define SOA_H
 
 #include <array>
+#include <tuple>
 #include <vector>
 
 namespace soacpp
@@ -185,7 +186,7 @@ namespace soacpp
         using typename base::iterator;
         using typename base::arrays;
 
-        soa_vector() noexcept = default;
+        soa_vector() = default;
 
         explicit soa_vector( size_type count )
         {
