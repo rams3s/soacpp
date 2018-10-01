@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.6)
 
 project (soacpp)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-Weverything -Werror -Wno-c++98-compat-pedantic -Wno-c++98-compat -Wno-missing-prototypes -Wno-unused-macros ${CMAKE_CXX_FLAGS}")
 #set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
