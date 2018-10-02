@@ -7,6 +7,9 @@
 
 namespace soacpp
 {
+    template <template <class...> class Container, typename... Attrs>
+    class soa_container_traits;
+
     namespace detail
     {
         template <class... T>
@@ -25,17 +28,97 @@ namespace soacpp
         {
             return index_apply_impl( f, std::make_index_sequence<N>{} );
         }
+
+        template <template <class...> class Container, typename... Attrs>
+        class soa_impl
+        {
+            using traits = soa_container_traits<Container, Attrs...>;
+
+        public:
+            using size_type = std::size_t;
+            using reference = typename traits::reference;
+            using const_reference = typename traits::const_reference;
+            using iterator = typename traits::iterator;
+            using arrays = typename traits::arrays;
+
+            soa_impl() noexcept = default;
+
+            iterator begin() noexcept
+            {
+                return detail::index_apply<attribute_count>(
+                    [this]( auto... Is ) { return iterator{std::begin( std::get<Is>( data ) )...}; } );
+            }
+
+            iterator end() noexcept
+            {
+                return detail::index_apply<attribute_count>(
+                    [this]( auto... Is ) { return iterator{std::end( std::get<Is>( data ) )...}; } );
+            }
+
+            reference operator[]( size_type idx )
+            {
+                return detail::index_apply<attribute_count>(
+                    [this, idx]( auto... Is ) { return reference{std::get<Is>( data )[idx]...}; } );
+            }
+
+            const_reference operator[]( size_type idx ) const
+            {
+                return detail::index_apply<attribute_count>(
+                    [this, idx]( auto... Is ) { return const_reference{std::get<Is>( data )[idx]...}; } );
+            }
+
+            template <std::size_t I>
+            typename std::tuple_element<I, arrays>::type & array()
+            {
+                return std::get<I>( data );
+            }
+
+            bool empty() const noexcept
+            {
+                return std::get<0>( data ).empty();
+            }
+
+            size_type size() const noexcept
+            {
+                return std::get<0>( data ).size();
+            }
+
+        protected:
+            arrays data;
+
+            static constexpr std::size_t attribute_count = traits::attribute_count;
+        };
     } // namespace detail
 
-    template <template <class...> class Container, typename T>
+    template <typename T>
     class container_traits
     {
 
     public:
-        using reference = typename Container<T>::reference;
-        using const_reference = typename Container<T>::const_reference;
+        using size_type = typename T::size_type;
+        using reference = typename T::reference;
+        using const_reference = typename T::const_reference;
 
-        using iterator = typename Container<T>::iterator;
+        using iterator = typename T::iterator;
+        // :TODO: const, reverse, const_reverse
+
+        using reserve_t = void ( T::* )( size_type capacity );
+        static constexpr reserve_t reserve = &T::reserve;
+    };
+
+    template <typename T, std::size_t count>
+    class container_traits<std::array<T, count>>
+    {
+
+        using array = std::array<T, count>;
+
+    public:
+        using size_type = typename array::size_type;
+        using reference = typename array::reference;
+        using const_reference = typename array::const_reference;
+
+        using iterator = typename array::iterator;
+        // :TODO: const, reverse, const_reverse
     };
 
     template <template <class...> class Container, typename... Attrs>
@@ -45,7 +128,7 @@ namespace soacpp
     class soa_container_traits
     {
         template <typename T>
-        using traits = container_traits<Container, T>;
+        using traits = container_traits<Container<T>>;
 
     public:
         using reference = std::tuple<typename traits<Attrs>::reference...>;
@@ -54,7 +137,7 @@ namespace soacpp
         using iterator_base = std::tuple<typename traits<Attrs>::iterator...>;
         using iterator = soa_iterator<Container, Attrs...>;
 
-        using arrays = std::tuple<Container<Attrs>...>;
+        using arrays = std::tuple<Container<std::decay_t<Attrs>>...>;
         static constexpr std::size_t attribute_count = std::tuple_size<arrays>{};
     };
 
@@ -113,78 +196,13 @@ namespace soacpp
         }
     };
 
-    template <template <class...> class Container, typename... Attrs>
-    class soa
-    {
-        using traits = soa_container_traits<Container, Attrs...>;
-
-    public:
-        using size_type = std::size_t;
-        using reference = typename traits::reference;
-        using const_reference = typename traits::const_reference;
-        using iterator = typename traits::iterator;
-        using arrays = typename traits::arrays;
-
-        soa() noexcept = default;
-
-        iterator begin() noexcept
-        {
-            return detail::index_apply<attribute_count>(
-                [this]( auto... Is ) { return iterator{std::begin( std::get<Is>( data ) )...}; } );
-        }
-
-        iterator end() noexcept
-        {
-            return detail::index_apply<attribute_count>(
-                [this]( auto... Is ) { return iterator{std::end( std::get<Is>( data ) )...}; } );
-        }
-
-        reference operator[]( size_type idx )
-        {
-            return detail::index_apply<attribute_count>(
-                [this, idx]( auto... Is ) { return reference{std::get<Is>( data )[idx]...}; } );
-        }
-
-        const_reference operator[]( size_type idx ) const
-        {
-            return detail::index_apply<attribute_count>(
-                [this, idx]( auto... Is ) { return const_reference{std::get<Is>( data )[idx]...}; } );
-        }
-
-        template <std::size_t I>
-        typename std::tuple_element<I, arrays>::type & array()
-        {
-            return std::get<I>( data );
-        }
-
-        bool empty() const noexcept
-        {
-            return std::get<0>( data ).empty();
-        }
-
-        size_type size() const noexcept
-        {
-            return std::get<0>( data ).size();
-        }
-
-    protected:
-        arrays data;
-
-        static constexpr std::size_t attribute_count = traits::attribute_count;
-    };
-
     template <typename... Attrs>
-    class soa_vector : private soa<std::vector, Attrs...>
+    class soa_vector : public detail::soa_impl<std::vector, Attrs...>
     {
-        using base = soa<std::vector, Attrs...>;
-        using base::attribute_count;
+        using base = detail::soa_impl<std::vector, Attrs...>;
 
     public:
         using typename base::size_type;
-        using typename base::reference;
-        using typename base::const_reference;
-        using typename base::iterator;
-        using typename base::arrays;
 
         soa_vector() = default;
 
@@ -193,13 +211,6 @@ namespace soacpp
             resize( count );
         }
 
-        using base::operator[];
-        using base::begin;
-        using base::end;
-        using base::array;
-        using base::empty;
-        using base::size;
-
         size_type capacity() const noexcept
         {
             return std::get<0>( this->data ).capacity();
@@ -207,14 +218,18 @@ namespace soacpp
 
         void reserve( size_type count )
         {
-            detail::index_apply<attribute_count>( [this, count]( auto... Is ) {
-                detail::call( ( std::get<Is>( this->data ).reserve( count ), true )... );
+            detail::index_apply<base::attribute_count>( [this, count]( auto... Is ) {
+                auto container_reserve = []( auto && container, size_type cnt ) {
+                    ( container.*container_traits<std::decay_t<decltype( container )>>::reserve )( cnt );
+                };
+
+                detail::call( ( container_reserve( std::get<Is>( this->data ), count ), true )... );
             } );
         }
 
         void resize( size_type count )
         {
-            detail::index_apply<attribute_count>( [this, count]( auto... Is ) {
+            detail::index_apply<base::attribute_count>( [this, count]( auto... Is ) {
                 detail::call( ( std::get<Is>( this->data ).resize( count ), true )... );
             } );
         }
@@ -231,7 +246,7 @@ namespace soacpp
     } // namespace detail
 
     template <std::size_t count, typename... Attrs>
-    using soa_array = soa<detail::std_array_helper<count>::template type, Attrs...>;
+    using soa_array = detail::soa_impl<detail::std_array_helper<count>::template type, Attrs...>;
 } // namespace soacpp
 
 // helper macros
@@ -269,7 +284,7 @@ namespace soacpp
     std::tuple EVAL( MAKE_TUPLE_TYPE_LIST( TRANSFORM( GET_TUPLE_ELEMENT, ( __VA_ARGS__ ), 0 ) ) )
 
 #define DECLARE_ATTRIBUTE_LAST( ATTRIBUTE_, TYPE_ )                                                                    \
-    typename container_traits<Container, decltype( adapted_type::ATTRIBUTE_ )>::TYPE_ ATTRIBUTE_
+    typename container_traits<Container<decltype( adapted_type::ATTRIBUTE_ )>>::TYPE_ ATTRIBUTE_
 #define DECLARE_ATTRIBUTE( ATTRIBUTE_, TYPE_ ) EVAL( DECLARE_ATTRIBUTE_LAST( ATTRIBUTE_, TYPE_ ) );
 #define DECLARE_ATTRIBUTES( TYPE_, ... ) TRANSFORM( DECLARE_ATTRIBUTE, ( __VA_ARGS__ ), TYPE_ )
 
